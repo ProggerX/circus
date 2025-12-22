@@ -1,0 +1,25 @@
+cabal-version:      3.0
+name:               circus
+version:            0.1.0.0
+-- synopsis:
+-- description:
+license:            GPL-3.0-only
+license-file:       LICENSE
+author:             ProggerX
+maintainer:         x@proggers.ru
+-- copyright:
+category:           Graphics
+build-type:         Simple
+-- extra-source-files:
+
+common warnings
+    ghc-options: -Wall
+
+executable circus
+    import:           warnings
+    main-is:          Main.hs
+    other-modules:    Circus.Parser, Circus.Types, Circus.Router
+    -- other-extensions:
+    build-depends:    base >= 4.19.2.0, gloss, text, bytestring, containers, lens, vector, parsec, array, mtl
+    hs-source-dirs:   app
+    default-language: GHC2021
