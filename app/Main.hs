@@ -47,6 +47,7 @@ picture dr = Pictures [elements, wires]
     arrow D = polygon [(0, -6), (-4, 2), (4, 2)]
     arrow L = polygon [(-6, 0), (2, -4), (2, 4)]
     arrow R = polygon [(6, 0), (-2, -4), (-2, 4)]
+    -- arrow _ = circleSolid 3
     connPoint (x, y) dir =
       let cx = fi x * cs
           cy = fi y * cs
