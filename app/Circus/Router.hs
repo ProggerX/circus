@@ -27,7 +27,7 @@ type Router a = State Grid a
 
 -- | Создание сетки из распаршенного Drawing
 mkGrid :: Drawing -> Grid
-mkGrid dr = Grid (2 * w + 1) (2 * h + 1) blocks S.empty
+mkGrid dr = Grid (3 * w + 1) (3 * h + 1) blocks S.empty
   where
     ls = links dr
     points = concatMap (\l -> [p1 l, p2 l]) ls
@@ -129,7 +129,7 @@ route lnk@(Link p1 d1 p2 d2) = do
       (Seg (Point cx cy) (Point dx dy)) =
         concat
           [ [ if dx == bx
-                then seg (Point bx ay) (Point (bx + 1) ay)
+                then seg (Point (bx + 1) ay) (Point bx ay)
                 else seg (Point (ax - 1) ay) (Point ax ay),
               if cy == ay
                 then seg (Point cx (cy - 1)) (Point cx cy)

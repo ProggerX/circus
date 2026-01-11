@@ -57,7 +57,7 @@ drawing bk gc = do
       _ <- char ','
       y <- read <$> many1 digit
       _ <- char ')'
-      pure $ (nm <> nn, (bk M.! nm, x * 2, y * 2))
+      pure $ (nm <> nn, (bk M.! nm, x * 3, y * 3))
     link :: [(String, (Element, Int, Int))] -> Parser Link
     link els' = do
       n1 <- many1 alphaNum
