@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Main where
@@ -5,6 +6,7 @@ module Main where
 import Circus.Parser
 import Circus.Router
 import Circus.Types
+import Data.Function
 import Data.Vector ((!))
 import Graphics.Gloss hiding (Circle, Line)
 
@@ -43,11 +45,18 @@ picture dr = Pictures [elements, wires]
       line [(toPixel x1 y1), (toPixel x2 y2)]
     toPixel x y = (fi x * cs / 2, fi y * cs / 2)
     dirMarker dir (px, py) = translate px py $ arrow dir
-    arrow U = polygon [(0, 6), (-4, -2), (4, -2)]
-    arrow D = polygon [(0, -6), (-4, 2), (4, 2)]
-    arrow L = polygon [(-6, 0), (2, -4), (2, 4)]
-    arrow R = polygon [(6, 0), (-2, -4), (-2, 4)]
-    -- arrow _ = circleSolid 3
+    arrow dir =
+      (circleSolid 3.5) & uncurry
+        translate
+        case dir of
+          U -> (0, 3.5)
+          D -> (0, -3.5)
+          L -> (-3.5, 0)
+          R -> (3.5, 0)
+    -- arrow U = polygon [(0, 6), (-4, -2), (4, -2)]
+    -- arrow D = polygon [(0, -6), (-4, 2), (4, 2)]
+    -- arrow L = polygon [(-6, 0), (2, -4), (2, 4)]
+    -- arrow R = polygon [(6, 0), (-2, -4), (-2, 4)]
     connPoint (x, y) dir =
       let cx = fi x * cs
           cy = fi y * cs
