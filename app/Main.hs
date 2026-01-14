@@ -6,9 +6,18 @@ module Main where
 import Circus.Parser
 import Circus.Router
 import Circus.Types
+import Codec.Picture
+import Codec.Picture.Extra
+import Codec.Picture.Types
 import Data.Function
 import Data.Vector ((!))
-import Graphics.Gloss hiding (Circle, Line)
+import Data.Vector.Storable qualified as V
+import Data.Word (Word8)
+import Foreign.ForeignPtr
+import Graphics.Gloss
+import Graphics.Gloss.Rendering
+import Graphics.Rendering.OpenGL qualified as GL
+import Graphics.UI.GLFW qualified as GLFW
 
 fi :: Int -> Float
 fi = fromIntegral
@@ -33,7 +42,7 @@ picture dr = Pictures [elements, wires]
     drawShape = \case
       SimpleSquare -> rect es es
       SimpleCircle -> circle (es / 2)
-      Line x1 y1 x2 y2 -> line [(x1, y1), (x2, y2)]
+      Circus.Types.Line x1 y1 x2 y2 -> line [(x1, y1), (x2, y2)]
       Circ r -> circle r
       Rect rw rh -> rect rw rh
     wires = Pictures $ wireWithMarkers <$> runRouter dr
@@ -71,4 +80,36 @@ main = do
   p <- parseDrawing "elements.txt" "example.txt"
   putStrLn $ "Links: " ++ show (links p)
   putStrLn $ "Wires: " ++ show (runRouter p)
-  display (InWindow "Window" (800, 800) (50, 50)) white $ picture p
+
+  let pic = picture p
+  rs <- initState
+
+  let w = 2048
+      h = 2048
+      pos = GL.Position 0 0
+
+  True <- GLFW.init
+  GLFW.windowHint (GLFW.WindowHint'Visible False)
+  mwin <- GLFW.createWindow w h "Export" Nothing Nothing
+  case mwin of
+    Nothing -> error "fuck"
+    Just win ->
+      GLFW.makeContextCurrent (Just win)
+
+  displayPicture (w, h) (makeColor 255 255 255 0) rs 1.0 (scale 1.2 1.2 $ translate (-400) (-400) pic)
+  saveFrame "output.png" pos (fromIntegral w) (fromIntegral h)
+
+saveFrame :: FilePath -> GL.Position -> Int -> Int -> IO ()
+saveFrame path pos w h = do
+  let nBytes = w * h * 4
+  fptr <- mallocForeignPtrArray nBytes :: IO (ForeignPtr Word8)
+
+  withForeignPtr fptr $ \ptr -> do
+    let pdata = GL.PixelData GL.RGBA GL.UnsignedByte ptr
+    GL.readPixels pos (GL.Size (fromIntegral w) (fromIntegral h)) pdata
+
+    let vec = V.unsafeFromForeignPtr0 (castForeignPtr fptr) nBytes
+    let image = Image w h vec :: Image PixelRGBA8
+
+    writePng path (dropAlphaLayer $ trim $ flipVertically image)
+    putStrLn $ "Frame saved to " ++ path

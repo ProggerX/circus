@@ -20,6 +20,6 @@ executable circus
     main-is:          Main.hs
     other-modules:    Circus.Parser, Circus.Types, Circus.Router
     -- other-extensions:
-    build-depends:    base >= 4.19.2.0, gloss, text, bytestring, containers, lens, vector, parsec, array, mtl
+    build-depends:    base >= 4.19.2.0, gloss, text, bytestring, containers, lens, vector, parsec, array, mtl, OpenGL, JuicyPixels, GLFW-b, gloss-rendering, JuicyPixels-extra
     hs-source-dirs:   app
     default-language: GHC2021

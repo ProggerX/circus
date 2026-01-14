@@ -14,7 +14,6 @@
         hpkgs = pkgs.haskellPackages;
         opts = {
           root = ./.;
-          source-overrides = {}; # Put overrides here
         };
         pkg = op': hpkgs.developPackage (opts // op');
       in {
