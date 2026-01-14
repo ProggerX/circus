@@ -31,15 +31,15 @@ drawing :: Bank -> GridConfig -> Parser Drawing
 drawing bk gc = do
   els <- many (el <* char ';')
   spaces
-  let minX = minimum $ fmap (\(_, (_, x, _)) -> x) els
-      minY = minimum $ fmap (\(_, (_, _, y)) -> y) els
-      elsNorm = fmap (\(n, (e, x, y)) -> (n, (e, x - minX + 1, y - minY + 1))) els
+  let minX = minimum $ fmap (\(_, (_, x, _), _) -> x) els
+      minY = minimum $ fmap (\(_, (_, _, y), _) -> y) els
+      elsNorm = fmap (\(n, (e, x, y), r) -> (n, (e, x - minX + 1, y - minY + 1), r)) els
   ls <- many (link elsNorm <* char ';')
   pure $
     Drawing
       { matrix =
           foldl
-            (\c (name, (e, x, y)) -> vupd c x y (Just (PlacedElement name e)))
+            (\c (name, (e, x, y), r) -> vupd c x y (Just (PlacedElement name e r)))
             (V.replicate (gridHeight gc) (V.replicate (gridWidth gc) Nothing))
             elsNorm,
         links = ls,
@@ -56,9 +56,14 @@ drawing bk gc = do
       x <- read <$> many1 digit
       _ <- char ','
       y <- read <$> many1 digit
-      _ <- char ')'
-      pure $ (nm <> nn, (bk M.! nm, x * 3, y * 3))
-    link :: [(String, (Element, Int, Int))] -> Parser Link
+      r <-
+        (char ')' >> pure 0)
+          <|> ( do
+                  _ <- char ','
+                  read <$> many1 digit <* char ')'
+              )
+      pure (nm <> nn, (bk M.! nm, x * 3, y * 3), r)
+    link :: [(String, (Element, Int, Int), Int)] -> Parser Link
     link els' = do
       n1 <- many1 alphaNum
       _ <- char '('
@@ -68,10 +73,15 @@ drawing bk gc = do
       _ <- char '('
       d2 <- direction
       _ <- char ')'
-      let coords = fmap (\(x, (_, y, z)) -> (x, (y, z))) els'
-          cs1 = fromJust $ lookup n1 coords
-          cs2 = fromJust $ lookup n2 coords
-      pure $ Link cs1 d1 cs2 d2
+      let els = fmap (\(x, (_, y, z), r) -> (x, ((y, z), r))) els'
+          (cs1, r1) = fromJust $ lookup n1 els
+          (cs2, r2) = fromJust $ lookup n2 els
+      pure $
+        Link
+          cs1
+          (iterate cyclicSucc d1 !! r1)
+          cs2
+          (iterate cyclicSucc d2 !! r2)
     direction =
       choice
         [ L <$ char 'L',

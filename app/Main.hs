@@ -29,7 +29,7 @@ picture dr = Pictures [elements, wires]
     dsp :: Int -> Int -> Picture
     dsp i j = translate (fi i * cs) (fi j * cs) $ case (matrix dr ! i ! j) of
       Nothing -> mempty
-      Just el -> Pictures $ drawShape <$> elType el
+      Just el -> rotate (fi $ elRot el * 90) $ Pictures $ drawShape <$> elType el
     drawShape = \case
       SimpleSquare -> rect es es
       SimpleCircle -> circle (es / 2)

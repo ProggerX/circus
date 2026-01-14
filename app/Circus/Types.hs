@@ -17,7 +17,8 @@ type Bank = Map String Element
 
 data PlacedElement = PlacedElement
   { elName :: String,
-    elType :: Element
+    elType :: Element,
+    elRot :: Int
   }
   deriving (Show, Eq)
 
@@ -34,7 +35,12 @@ data GridConfig = GridConfig
 defaultGrid :: GridConfig
 defaultGrid = GridConfig 40 40 50 40
 
-data Direction = U | L | R | D deriving (Show, Eq)
+data Direction = U | R | D | L deriving (Show, Eq, Enum, Bounded)
+
+cyclicSucc :: (Eq a, Enum a, Bounded a) => a -> a
+cyclicSucc a
+  | a == maxBound = minBound
+  | otherwise = succ a
 
 data Link = Link
   { p1 :: (Int, Int),
