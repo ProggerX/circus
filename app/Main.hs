@@ -24,7 +24,7 @@ fi :: Int -> Float
 fi = fromIntegral
 
 rect :: Float -> Float -> Picture
-rect a b = lineLoop $ rectanglePath a b
+rect a b = thickLineLoop (rectanglePath a b) 1
 
 picture :: Drawing -> Picture
 picture dr = Pictures [elements, wires]
@@ -42,9 +42,9 @@ picture dr = Pictures [elements, wires]
       Just el -> rotate (fi $ elRot el * 90) $ Pictures $ drawShape <$> elType el
     drawShape = \case
       SimpleSquare -> rect es es
-      SimpleCircle -> circle (es / 2)
-      Circus.Types.Line x1 y1 x2 y2 -> line [(x1, y1), (x2, y2)]
-      Circ r -> circle r
+      SimpleCircle -> ThickCircle (es / 2) 1
+      Circus.Types.Line x1 y1 x2 y2 -> thickLine (x1, y1) (x2, y2) 1
+      Circ r -> ThickCircle r 1
       Rect rw rh -> rect rw rh
     wires = Pictures $ wireWithMarkers <$> runRouter dr
     wireWithMarkers (segs, Link pos1 dir1 pos2 dir2) =
@@ -52,7 +52,7 @@ picture dr = Pictures [elements, wires]
         (segToLine <$> segs)
           ++ [dirMarker dir1 (connPoint pos1 dir1), dirMarker dir2 (connPoint pos2 dir2)]
     segToLine (Seg (Point x1 y1) (Point x2 y2)) =
-      line [(toPixel x1 y1), (toPixel x2 y2)]
+      thickLine (toPixel x1 y1) (toPixel x2 y2) 1
     toPixel x y = (fi x * cs / 2, fi y * cs / 2)
     dirMarker dir (px, py) = translate px py $ arrow dir
     arrow dir =
@@ -78,22 +78,25 @@ picture dr = Pictures [elements, wires]
 
 main :: IO ()
 main = do
-  p <- parseDrawing "elements.txt" "example.txt"
-  putStrLn $ "Links: " ++ show (links p)
-  putStrLn $ "Wires: " ++ show (runRouter p)
-
-  let pic = picture p
   args <- getArgs
   case args of
-    ("save" : _) -> toFile pic
-    _ -> display (InWindow "Window" (800, 800) (20, 20)) white pic
+    (fname : xs) -> do
+      p <- parseDrawing "elements.txt" fname
+      putStrLn $ "Links: " ++ show (links p)
+      putStrLn $ "Wires: " ++ show (runRouter p)
+
+      let pic = picture p
+      case xs of
+        ("save" : _) -> toFile pic
+        _ -> display (InWindow "Window" (800, 800) (20, 20)) white pic
+    _ -> error "Wanted first argument -- filename"
 
 toFile :: Picture -> IO ()
 toFile pic = do
   rs <- initState
 
-  let w = 2048
-      h = 2048
+  let w = 8192
+      h = 8192
       pos = GL.Position 0 0
 
   True <- GLFW.init
@@ -104,7 +107,7 @@ toFile pic = do
     Just win ->
       GLFW.makeContextCurrent (Just win)
 
-  displayPicture (w, h) (makeColor 255 255 255 0) rs 1.0 (scale 1.2 1.2 $ translate (-400) (-400) pic)
+  displayPicture (w, h) (makeColor 255 255 255 0) rs 1.0 (scale 4 4 $ translate (-400) (-400) pic)
   saveFrame "output.png" pos (fromIntegral w) (fromIntegral h)
 
 saveFrame :: FilePath -> GL.Position -> Int -> Int -> IO ()
@@ -121,3 +124,23 @@ saveFrame path pos w h = do
 
     writePng path (dropAlphaLayer $ trim $ flipVertically image)
     putStrLn $ "Frame saved to " ++ path
+
+thickLine :: (Float, Float) -> (Float, Float) -> Float -> Picture
+thickLine (x1, y1) (x2, y2) thickness =
+  let dx = x2 - x1
+      dy = y2 - y1
+      len = sqrt (dx ** 2 + dy ** 2)
+      angle = atan2 dy dx * 180 / pi
+   in translate ((x1 + x2) / 2) ((y1 + y2) / 2) $
+        rotate (-angle) $
+          rectangleSolid len thickness
+
+thickLineLoop :: Path -> Float -> Picture
+thickLineLoop [] _ = blank
+thickLineLoop [_] _ = blank
+thickLineLoop path thickness =
+  case path of
+    (h : _) ->
+      let loopPath = path ++ [h]
+          segments = zip loopPath (drop 1 loopPath)
+       in pictures [thickLine p1 p2 thickness | (p1, p2) <- segments]
