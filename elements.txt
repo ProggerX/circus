@@ -2,3 +2,4 @@ R:rect 20 10+line 10 0 20 0+line -10 0 -20 0;
 LED:line 15 18 15 -18+line -15 15 -15 -15+line -15 15 15 0+line -15 -15 15 0+line 15 0 20 0+line -15 0 -20 0;
 V:line -5 10 -5 -10+line 5 18 5 -18+line -5 0 -20 0+line 5 0 20 0;
 SQ:ss;
+LAMP:circ 15+line 10 10 -10 -10+line 10 -10 -10 10+line 15 0 20 0+line -15 0 -20 0;

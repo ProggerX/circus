@@ -18,6 +18,7 @@ import Graphics.Gloss
 import Graphics.Gloss.Rendering
 import Graphics.Rendering.OpenGL qualified as GL
 import Graphics.UI.GLFW qualified as GLFW
+import System.Environment
 
 fi :: Int -> Float
 fi = fromIntegral
@@ -82,6 +83,13 @@ main = do
   putStrLn $ "Wires: " ++ show (runRouter p)
 
   let pic = picture p
+  args <- getArgs
+  case args of
+    ("save" : _) -> toFile pic
+    _ -> display (InWindow "Window" (800, 800) (20, 20)) white pic
+
+toFile :: Picture -> IO ()
+toFile pic = do
   rs <- initState
 
   let w = 2048
